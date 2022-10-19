@@ -9,8 +9,7 @@ defmodule BayesicNif.MixProject do
       start_permanent: Mix.env() == :prod,
       package: package(),
       deps: deps(),
-      compilers: [:rustler] ++ Mix.compilers(),
-      rustler_crates: [bayesic_nif: []]
+      compilers: Mix.compilers()
     ]
   end
 
@@ -24,8 +23,7 @@ defmodule BayesicNif.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:rustler, "~> 0.21"},
-
+      {:rustler, "~> 0.26"},
       {:benchee, "~> 1.0", only: :dev},
       {:csv, "~> 2.0", only: :dev},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
@@ -43,7 +41,7 @@ defmodule BayesicNif.MixProject do
       links: %{
         github: "https://github.com/mmmries/bayesic_nif",
         docs: "http://hexdocs.pm/bayesic_nif"
-      },
+      }
     ]
   end
 end
