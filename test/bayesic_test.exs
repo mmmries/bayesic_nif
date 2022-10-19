@@ -3,28 +3,30 @@ defmodule BayesicTest do
   doctest Bayesic
 
   setup do
-    classifier = Bayesic.new()
-                |> Bayesic.train("story", ["once","upon","a","time"])
-                |> Bayesic.train("news", ["tonight","on","the","news"])
-                |> Bayesic.train("novel", ["it","was","the","best","of","times"])
-                |> Bayesic.prune(0.5)
+    classifier =
+      Bayesic.new()
+      |> Bayesic.train("story", ["once", "upon", "a", "time"])
+      |> Bayesic.train("news", ["tonight", "on", "the", "news"])
+      |> Bayesic.train("novel", ["it", "was", "the", "best", "of", "times"])
+      |> Bayesic.prune(0.5)
+
     {:ok, %{classifier: classifier}}
   end
 
   test "can classify matching tokens", %{classifier: classifier} do
-    classification = Bayesic.classify(classifier, ["once","upon","a","time"])
+    {:ok, classification} = Bayesic.classify(classifier, ["once", "upon", "a", "time"])
     assert classification == [{"story", 1.0}]
   end
 
   test "can classify not exact matches", %{classifier: classifier} do
-    classification = Bayesic.classify(classifier, ["the","time"])
+    {:ok, classification} = Bayesic.classify(classifier, ["the", "time"])
     assert probability_of(classification, "story") > 0.9
     assert probability_of(classification, "news") < 0.8
     assert probability_of(classification, "novel") < 0.8
   end
 
   test "returns no potential matches for nonsense", %{classifier: classifier} do
-    classification = Bayesic.classify(classifier, ["furby"])
+    {:ok, classification} = Bayesic.classify(classifier, ["furby"])
     assert classification == []
   end
 

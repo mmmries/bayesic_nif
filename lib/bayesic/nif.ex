@@ -1,9 +1,6 @@
 defmodule Bayesic.Nif do
   use Rustler, otp_app: :bayesic_nif, crate: :bayesic_nif
 
-  # When your NIF is loaded, it will override this function.
-  #def add(_a, _b), do: :erlang.nif_error(:nif_not_loaded)
-
   def new, do: :erlang.nif_error(:nif_not_loaded)
 
   def train(_bayesic, _class, _tokens) do

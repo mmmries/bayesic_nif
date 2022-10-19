@@ -1,4 +1,4 @@
-use rustler::{Encoder, Env, NifResult, SchedulerFlags, Term};
+use rustler::{Atom, Env, Term};
 use rustler::resource::ResourceArc;
 use std::sync::Mutex;
 use bayesic::Bayesic;
@@ -14,54 +14,34 @@ mod atoms {
 
 pub struct BayesicResource(Mutex<Bayesic>);
 
-rustler::rustler_export_nifs! {
-  "Elixir.Bayesic.Nif",
-  [
-      ("new", 0, new),
-      ("train", 3, train),
-      ("classify", 2, classify, SchedulerFlags::DirtyCpu),
-      ("prune", 2, prune),
-  ],
-  Some(load)
-}
-
 fn load(env: Env, _info: Term) -> bool {
   rustler::resource!(BayesicResource, env);
   true
 }
 
-fn new<'a>(env: Env<'a>, _args: &[Term<'a>]) -> NifResult<Term<'a>> {
+#[rustler::nif]
+fn new() -> ResourceArc<BayesicResource> {
   let resource = ResourceArc::new(BayesicResource(Mutex::new(Bayesic::new())));
-  Ok(resource.encode(env))
+  resource
 }
 
-fn train<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-  let resource: ResourceArc<BayesicResource> = match args[0].decode() {
-    Err(_) => return Ok((atoms::error(), atoms::bad_reference()).encode(env)),
-    Ok(r) => r,
-  };
-  let class: String = args[1].decode()?;
-  let tokens: Vec<String> = args[2].decode()?;
-
+#[rustler::nif(schedule = "DirtyCpu")]
+fn train(resource: ResourceArc<BayesicResource>, class: String, tokens: Vec<String>) -> Result<Atom, Atom> {
   let mut bayesic = match resource.0.try_lock() {
-    Err(_) => return Ok((atoms::error(), atoms::lock_fail()).encode(env)),
+    Err(_) => return Err(atoms::lock_fail()),
     Ok(guard) => guard,
   };
 
   bayesic.train(class, tokens);
 
-  Ok(atoms::ok().encode(env))
+  Ok(atoms::ok())
 }
 
-fn classify<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-  let resource: ResourceArc<BayesicResource> = match args[0].decode() {
-    Err(_) => return Ok((atoms::error(), atoms::bad_reference()).encode(env)),
-    Ok(r) => r,
-  };
-  let tokens: Vec<String> = args[1].decode()?;
+#[rustler::nif(schedule = "DirtyCpu")]
+fn classify(resource: ResourceArc<BayesicResource>, tokens: Vec<String>) -> Result<Vec<(String, f64)>, Atom> {
 
   let bayesic = match resource.0.try_lock() {
-    Err(_) => return Ok((atoms::error(), atoms::lock_fail()).encode(env)),
+    Err(_) => return Err(atoms::lock_fail()),
     Ok(guard) => guard,
   };
 
@@ -71,22 +51,19 @@ fn classify<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     result.push((key, value));
   }
 
-  Ok(result.encode(env))
+  Ok(result)
 }
 
-fn prune<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-  let resource: ResourceArc<BayesicResource> = match args[0].decode() {
-    Err(_) => return Ok((atoms::error(), atoms::bad_reference()).encode(env)),
-    Ok(r) => r,
-  };
-  let uniqueness_threshold: f64 = args[1].decode()?;
-
+#[rustler::nif(schedule = "DirtyCpu")]
+fn prune(resource: ResourceArc<BayesicResource>, uniqueness_threshold: f64) -> Result<Atom, (Atom, Atom)> {
   let mut bayesic = match resource.0.try_lock() {
-    Err(_) => return Ok((atoms::error(), atoms::lock_fail()).encode(env)),
+    Err(_) => return Err((atoms::error(), atoms::lock_fail())),
     Ok(guard) => guard,
   };
 
   bayesic.prune(uniqueness_threshold);
 
-  Ok(atoms::ok().encode(env))
+  Ok(atoms::ok())
 }
+
+rustler::init!("Elixir.Bayesic.Nif", [new, train, classify, prune], load = load);

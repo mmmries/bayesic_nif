@@ -24,7 +24,6 @@ defmodule BayesicNif.MixProject do
   defp deps do
     [
       {:rustler, "~> 0.26"},
-
       {:benchee, "~> 1.0", only: :dev},
       {:csv, "~> 2.0", only: :dev},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
@@ -42,7 +41,7 @@ defmodule BayesicNif.MixProject do
       links: %{
         github: "https://github.com/mmmries/bayesic_nif",
         docs: "http://hexdocs.pm/bayesic_nif"
-      },
+      }
     ]
   end
 end
