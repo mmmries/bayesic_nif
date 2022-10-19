@@ -4,31 +4,29 @@ use std::sync::Mutex;
 use bayesic::Bayesic;
 
 mod atoms {
-    rustler::rustler_atoms! {
-        atom bad_reference;
-        atom error;
-        atom lock_fail;
-        atom ok;
-        //atom __true__ = "true";
-        //atom __false__ = "false";
+    rustler::atoms! {
+        bad_reference,
+        error,
+        lock_fail,
+        ok,
     }
 }
 
 pub struct BayesicResource(Mutex<Bayesic>);
 
 rustler::rustler_export_nifs! {
-    "Elixir.Bayesic.Nif",
-    [
-        ("new", 0, new),
-        ("train", 3, train),
-        ("classify", 2, classify, SchedulerFlags::DirtyCpu),
-        ("prune", 2, prune),
-    ],
-    Some(load)
+  "Elixir.Bayesic.Nif",
+  [
+      ("new", 0, new),
+      ("train", 3, train),
+      ("classify", 2, classify, SchedulerFlags::DirtyCpu),
+      ("prune", 2, prune),
+  ],
+  Some(load)
 }
 
 fn load(env: Env, _info: Term) -> bool {
-  rustler::resource_struct_init!(BayesicResource, env);
+  rustler::resource!(BayesicResource, env);
   true
 }
 

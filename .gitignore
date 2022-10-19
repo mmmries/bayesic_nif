@@ -24,3 +24,4 @@ bayesic_nif-*.tar
 
 benchmarks/*.csv
 priv/native/*.so
+native/bayesic_nif/target/*
